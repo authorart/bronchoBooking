@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bronchoscopy Room · Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:        #f0f4f8;
+  --surface:   #ffffff;
+  --border:    #d1dbe8;
+  --border2:   #e8eef5;
+  --text:      #1a2332;
+  --text2:     #3d5166;
+  --text3:     #6b7c93;
+  --teal:      #0891b2;
+  --teal-lt:   #e0f7fa;
+  --teal-dk:   #0e7490;
+  --green:     #059669;
+  --green-lt:  #d1fae5;
+  --blue:      #1d6fa4;
+  --blue-lt:   #dbeafe;
+  --orange:    #d97706;
+  --orange-lt: #fef3c7;
+  --red:       #dc2626;
+  --red-lt:    #fee2e2;
+  --shadow:    0 2px 10px rgba(0,0,0,.07);
+  --shadow2:   0 4px 20px rgba(0,0,0,.10);
+  --r:         12px;
+  --r2:        16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+button{cursor:pointer;font-family:inherit}
+
+/* Loading */
+#loading-overlay{
+  position:fixed;inset:0;background:rgba(240,244,248,.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  z-index:999;backdrop-filter:blur(3px);
+}
+#loading-overlay.hidden{display:none}
+.spinner{
+  width:48px;height:48px;border-radius:50%;
+  border:4px solid var(--border);border-top-color:var(--teal);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:17px;color:var(--text2);font-weight:500}
+
+/* Topbar */
+.topbar{
+  background:var(--surface);border-bottom:2px solid var(--border);
+  box-shadow:var(--shadow);position:sticky;top:0;z-index:100;
+}
+.topbar-inner{
+  max-width:1300px;margin:0 auto;padding:0 20px;height:66px;
+  display:flex;align-items:center;gap:14px;
+}
+.topbar-icon{
+  width:44px;height:44px;border-radius:10px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;box-shadow:0 2px 8px rgba(8,145,178,.3);
+}
+.topbar-title{font-size:19px;font-weight:800;color:var(--text);letter-spacing:-.01em}
+.topbar-sub{font-size:14px;color:var(--text3);margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.clock-badge{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:7px 14px;font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;
+}
+.btn-refresh{
+  background:var(--teal);color:white;border:none;border-radius:8px;
+  padding:9px 18px;font-size:15px;font-weight:700;transition:background .2s;
+}
+.btn-refresh:hover{background:var(--teal-dk)}
+
+/* Main */
+.main{max-width:1300px;margin:0 auto;padding:24px 20px 48px;display:flex;flex-direction:column;gap:22px}
+
+/* Filter Card */
+.filter-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);box-shadow:var(--shadow);padding:22px 24px;
+}
+.filter-card-title{
+  font-size:17px;font-weight:800;color:var(--text);
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.period-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.pill{
+  padding:9px 20px;border-radius:50px;border:2px solid var(--border);
+  background:white;color:var(--text2);font-size:15px;font-weight:600;transition:all .2s;
+}
+.pill:hover{border-color:var(--teal);color:var(--teal)}
+.pill.active{background:var(--teal);border-color:var(--teal);color:white;box-shadow:0 2px 8px rgba(8,145,178,.25)}
+.filter-row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+.filter-label{font-size:14px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px}
+.filter-ctrl{
+  background:var(--bg);border:2px solid var(--border);border-radius:var(--r);
+  padding:11px 14px;font-family:'Sarabun',sans-serif;font-size:15px;color:var(--text);
+  outline:none;transition:border-color .2s;width:100%;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7c93' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;
+}
+.filter-ctrl:focus{border-color:var(--teal);background-color:white}
+.btn-apply{
+  background:var(--teal);color:white;border:none;border-radius:var(--r);
+  padding:12px 28px;font-size:15px;font-weight:700;transition:background .2s;
+  white-space:nowrap;align-self:flex-end;
+}
+.btn-apply:hover{background:var(--teal-dk)}
+.btn-export{
+  background:white;color:var(--text2);border:2px solid var(--border);
+  border-radius:var(--r);padding:12px 20px;font-size:15px;font-weight:600;
+  transition:all .2s;white-space:nowrap;align-self:flex-end;
+}
+.btn-export:hover{border-color:var(--teal);color:var(--teal)}
+
+/* KPI Row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:800px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);
+  box-shadow:var(--shadow);padding:22px 24px;position:relative;overflow:hidden;
+  transition:transform .2s,box-shadow .2s;
+}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow2)}
+.kpi-bar{position:absolute;top:0;left:0;right:0;height:5px;background:var(--accent,var(--teal))}
+.kpi-icon{
+  width:46px;height:46px;border-radius:10px;
+  background:var(--accent-lt,var(--teal-lt));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;margin-bottom:12px;
+}
+.kpi-value{font-size:42px;font-weight:800;color:var(--accent,var(--teal));letter-spacing:-.03em;line-height:1}
+.kpi-label{font-size:16px;font-weight:700;color:var(--text2);margin-top:7px}
+.kpi-sub{font-size:13px;color:var(--text3);margin-top:3px}
+
+/* Panel */
+.panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);box-shadow:var(--shadow);padding:24px;
+}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+.panel-title{font-size:17px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-sub{font-size:13px;color:var(--text3)}
+.badge{
+  background:var(--bg);border:1px solid var(--border);border-radius:20px;
+  padding:4px 14px;font-size:13px;font-weight:600;color:var(--text2);
+}
+.chart-grid-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:960px){.chart-grid-3{grid-template-columns:1fr}}
+@media(max-width:720px){.chart-grid-2{grid-template-columns:1fr}}
+.chart-wrap{position:relative;height:240px}
+.chart-wrap.tall{height:300px}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:15px}
+thead tr{border-bottom:2px solid var(--border)}
+th{
+  padding:13px 16px;text-align:left;font-size:13px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;background:var(--bg);
+}
+th:first-child{border-radius:8px 0 0 8px}
+th:last-child{border-radius:0 8px 8px 0}
+td{padding:14px 16px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafc}
+.status{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 14px;border-radius:20px;font-size:14px;font-weight:700;white-space:nowrap;
+}
+.status-done     {background:var(--green-lt);color:#065f46}
+.status-upcoming {background:var(--blue-lt);color:#1e3a5f}
+.status-cancelled{background:var(--red-lt);color:#7f1d1d}
+.proc-tag{
+  display:inline-block;padding:5px 13px;border-radius:6px;
+  font-size:13px;font-weight:700;background:var(--blue-lt);color:var(--blue);
+}
+.proc-tag.pleuro{background:var(--orange-lt);color:#92400e}
+.empty-row td{text-align:center;padding:48px 20px;color:var(--text3);font-size:16px}
+.empty-icon{font-size:48px;margin-bottom:10px}
+
+/* Mobile: card layout for table */
+@media(max-width:640px){
+  thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr{
+    background:white;border:1px solid var(--border);
+    border-radius:var(--r);margin-bottom:10px;padding:4px 0;
+  }
+  td{
+    padding:11px 16px;border:none;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  }
+  td::before{
+    content:attr(data-label);
+    font-size:12px;font-weight:700;color:var(--text3);
+    text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;width:90px;padding-top:2px;
+  }
+}
+
+/* Animations */
+.fade-up{animation:fadeUp .4s ease both}
+.d1{animation-delay:.05s}.d2{animation-delay:.10s}
+.d3{animation-delay:.15s}.d4{animation-delay:.20s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">กำลังโหลดข้อมูล...</div>
+</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-icon">🫁</div>
+    <div>
+      <div class="topbar-title">ห้องส่องกล้องหลอดลม</div>
+      <div class="topbar-sub">Dashboard สรุปการจอง</div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-badge" id="clock">—</div>
+      <button class="btn-refresh" onclick="fetchData()">⟳ รีเฟรช</button>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- Filter -->
+  <div class="filter-card fade-up">
+    <div class="filter-card-title">🔍 เลือกช่วงเวลาและตัวกรอง</div>
+    <div class="period-row">
+      <button class="pill" id="pill-day"    onclick="setPeriod('day')">📅 วันนี้</button>
+      <button class="pill" id="pill-week"   onclick="setPeriod('week')">📆 สัปดาห์นี้</button>
+      <button class="pill active" id="pill-month" onclick="setPeriod('month')">🗓 เดือนนี้</button>
+      <button class="pill" id="pill-year"   onclick="setPeriod('year')">📊 ปีนี้</button>
+      <button class="pill" id="pill-custom" onclick="setPeriod('custom')">✏️ กำหนดเอง</button>
+    </div>
+    <div class="filter-row">
+      <div class="filter-group" id="grp-from" style="display:none">
+        <label class="filter-label">📅 จากวันที่</label>
+        <input type="date" id="date-from" class="filter-ctrl">
+      </div>
+      <div class="filter-group" id="grp-to" style="display:none">
+        <label class="filter-label">📅 ถึงวันที่</label>
+        <input type="date" id="date-to" class="filter-ctrl">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">👨‍⚕️ แพทย์ผู้จอง</label>
+        <select id="filter-doctor" class="filter-ctrl">
+          <option value="all">แพทย์ทั้งหมด</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">🔬 หัตถการ</label>
+        <select id="filter-proc" class="filter-ctrl">
+          <option value="all">ทั้งหมด</option>
+          <option value="Bronchoscopy">Bronchoscopy</option>
+          <option value="Pleuroscopy">Pleuroscopy</option>
+        </select>
+      </div>
+      <button class="btn-apply" onclick="fetchData()">🔍 แสดงผล</button>
+      <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi fade-up d1" style="--accent:var(--teal);--accent-lt:var(--teal-lt)">
+      <div class="kpi-bar"></div>
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-value" id="kpi-total">—</div>
+      <div class="kpi-label">จองทั้งหมด</div>
+      <div class="kpi-sub">ในช่วงที่เลือก</div>
+    </div>
+    <div class="kpi fade-up d2" style="--accent:var(--green);--accent-lt:var(--green-lt)">
+      <div class="kpi-bar"></div>
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-value" id="kpi-done">—</div>
+      <div class="kpi-label">ทำหัตถการแล้ว</div>
+      <div class="kpi-sub">Completed</div>
+    </div>
+    <div class="kpi fade-up d3" style="--accent:var(--blue);--accent-lt:var(--blue-lt)">
+      <div class="kpi-bar"></div>
+      <div class="kpi-icon">🕐</div>
+      <div class="kpi-value" id="kpi-upcoming">—</div>
+      <div class="kpi-label">รอทำหัตถการ</div>
+      <div class="kpi-sub">Upcoming</div>
+    </div>
+    <div class="kpi fade-up d4" style="--accent:var(--red);--accent-lt:var(--red-lt)">
+      <div class="kpi-bar"></div>
+      <div class="kpi-icon">❌</div>
+      <div class="kpi-value" id="kpi-cancelled">—</div>
+      <div class="kpi-label">ยกเลิก</div>
+      <div class="kpi-sub">Cancelled</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="chart-grid-3 fade-up">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">📈 จำนวนการจองตามวัน</div>
+        <span class="badge" id="timeline-badge">—</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-timeline"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">🔬 สัดส่วนหัตถการ</div></div>
+      <div class="chart-wrap"><canvas id="chart-proc"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">📊 สถานะการจอง</div></div>
+      <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="chart-grid-2 fade-up">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">👨‍⚕️ จำนวนการจองรายแพทย์</div></div>
+      <div class="chart-wrap"><canvas id="chart-doctor"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">🩺 Bronchoscopy — หัตถการย่อย</div>
+        <span class="panel-sub">นับรายครั้ง</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-subproc"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="panel fade-up">
+    <div class="panel-head">
+      <div class="panel-title">📋 รายการการจองทั้งหมด <span class="badge" id="table-badge">—</span></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>วันที่ / เวลา</th>
+            <th>แพทย์</th>
+            <th>หัตถการ</th>
+            <th>HN</th>
+            <th>ชื่อผู้ป่วย</th>
+            <th>สถานะ</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr class="empty-row"><td colspan="6">
+            <div class="empty-icon">⏳</div>กำลังโหลด...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlbj_d06R4Q_ujRZGfgCOjiYVafzTK9OYTt4eNxMK5hTeQqRbp8UZye93E1DbiCWs-vA/exec'; // ← แก้ตรงนี้
+
+let charts = {}, currentPeriod = 'month', rawData = null;
+
+// Clock
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Period
+function setPeriod(p) {
+  currentPeriod = p;
+  document.querySelectorAll('.pill').forEach(el => el.classList.remove('active'));
+  document.getElementById('pill-'+p)?.classList.add('active');
+  document.getElementById('grp-from').style.display = p==='custom' ? '' : 'none';
+  document.getElementById('grp-to').style.display   = p==='custom' ? '' : 'none';
+  if (p !== 'custom') fetchData();
+}
+
+function getDateRange() {
+  const now = new Date(), today = now.toISOString().slice(0,10);
+  if (currentPeriod==='day') return {from:today,to:today};
+  if (currentPeriod==='week') {
+    const d = new Date(now);
+    d.setDate(d.getDate()-((d.getDay()+6)%7));
+    const mon = d.toISOString().slice(0,10);
+    d.setDate(d.getDate()+6);
+    return {from:mon,to:d.toISOString().slice(0,10)};
+  }
+  if (currentPeriod==='month') {
+    const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0');
+    return {from:`${y}-${m}-01`,to:today};
+  }
+  if (currentPeriod==='year') return {from:`${now.getFullYear()}-01-01`,to:today};
+  return {from:document.getElementById('date-from').value||'',to:document.getElementById('date-to').value||''};
+}
+
+// Fetch
+async function callServer(action, params) {
+  const res = await fetch(SCRIPT_URL,{
+    method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action,params}),redirect:'follow',
+  });
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
+}
+
+async function loadDoctors() {
+  try {
+    const r = await callServer('getDoctorList',{});
+    const sel = document.getElementById('filter-doctor');
+    if (r.success) r.doctors.forEach(d=>{
+      const o=document.createElement('option');
+      o.value=d;o.textContent=d;sel.appendChild(o);
+    });
+  } catch(_){}
+}
+
+async function fetchData() {
+  setLoading(true);
+  const {from,to} = getDateRange();
+  const doctor    = document.getElementById('filter-doctor').value;
+  const procedure = document.getElementById('filter-proc').value;
+  try {
+    const r = await callServer('getDashboardData',{from,to,doctor,procedure});
+    if (!r.success) throw new Error(r.error);
+    rawData = r;
+    renderAll(r,from,to);
+  } catch(err){ alert('โหลดข้อมูลไม่สำเร็จ: '+err.message); }
+  finally { setLoading(false); }
+}
+
+function setLoading(v){document.getElementById('loading-overlay').classList.toggle('hidden',!v)}
+
+// Render
+function renderAll(data,from,to) {
+  const {summary,bookings,charts:c} = data;
+  animateNum('kpi-total',    summary.total);
+  animateNum('kpi-done',     summary.done);
+  animateNum('kpi-upcoming', summary.upcoming);
+  animateNum('kpi-cancelled',summary.cancelled);
+  const fmt = d => d ? new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '—';
+  document.getElementById('timeline-badge').textContent = `${fmt(from)} – ${fmt(to)}`;
+  document.getElementById('table-badge').textContent = `${bookings.length} รายการ`;
+  renderTimeline(c.timeline);
+  renderProcDonut(c.byProcedure);
+  renderStatusDonut(summary);
+  renderDoctorBar(c.byDoctor);
+  renderSubProc(c.subProcMap);
+  renderTable(bookings);
+}
+
+function animateNum(id,target) {
+  const el=document.getElementById(id),dur=700,start=performance.now(),from=parseInt(el.textContent)||0;
+  const step=now=>{
+    const t=Math.min((now-start)/dur,1);
+    el.textContent=Math.round(from+(target-from)*(1-Math.pow(1-t,3)));
+    if(t<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+const PAL = ['#0891b2','#059669','#1d6fa4','#d97706','#7c3aed','#e11d48','#06b6d4','#84cc16'];
+
+function mkChart(id,config) {
+  if(charts[id]) charts[id].destroy();
+  Chart.defaults.font.family="'Sarabun',sans-serif";
+  Chart.defaults.font.size=13;
+  Chart.defaults.color='#3d5166';
+  charts[id] = new Chart(document.getElementById(id).getContext('2d'),config);
+}
+
+function renderTimeline(tl) {
+  mkChart('chart-timeline',{
+    type:'bar',
+    data:{
+      labels:tl.map(t=>new Date(t.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'})),
+      datasets:[{
+        label:'จำนวนการจอง',data:tl.map(t=>t.count),
+        backgroundColor:'rgba(8,145,178,.15)',borderColor:'#0891b2',
+        borderWidth:2,borderRadius:6,hoverBackgroundColor:'rgba(8,145,178,.35)',
+      }],
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'#e8eef5'},ticks:{font:{size:13}}},
+        y:{grid:{color:'#e8eef5'},ticks:{stepSize:1,font:{size:13}},beginAtZero:true},
+      },
+    },
+  });
+}
+
+function renderProcDonut(byProc) {
+  const keys=Object.keys(byProc);
+  mkChart('chart-proc',{
+    type:'doughnut',
+    data:{
+      labels:keys.length?keys:['ไม่มีข้อมูล'],
+      datasets:[{data:keys.length?keys.map(k=>byProc[k]):[1],backgroundColor:keys.length?PAL:['#e8eef5'],borderWidth:3,borderColor:'#fff',hoverOffset:8}],
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:16,boxWidth:14,font:{size:14}}}}},
+  });
+}
+
+function renderStatusDonut({done,upcoming,cancelled}) {
+  mkChart('chart-status',{
+    type:'doughnut',
+    data:{
+      labels:['ทำแล้ว','รอทำ','ยกเลิก'],
+      datasets:[{data:[done,upcoming,cancelled],backgroundColor:['#059669','#1d6fa4','#dc2626'],borderWidth:3,borderColor:'#fff',hoverOffset:8}],
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:16,boxWidth:14,font:{size:14}}}}},
+  });
+}
+
+function renderDoctorBar(byDoc) {
+  const entries=Object.entries(byDoc).sort((a,b)=>b[1]-a[1]);
+  mkChart('chart-doctor',{
+    type:'bar',
+    data:{
+      labels:entries.map(e=>e[0]),
+      datasets:[{label:'การจอง',data:entries.map(e=>e[1]),backgroundColor:PAL,borderRadius:6,borderWidth:0}],
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'#e8eef5'},ticks:{stepSize:1,font:{size:13}},beginAtZero:true},
+        y:{grid:{display:false},ticks:{font:{size:14},color:'#1a2332'}},
+      },
+    },
+  });
+}
+
+function renderSubProc(sub) {
+  mkChart('chart-subproc',{
+    type:'bar',
+    data:{
+      labels:['BAL','TBBx','EBUS TBNA'],
+      datasets:[{label:'ครั้ง',data:[sub['BAL']||0,sub['TBBx']||0,sub['EBUS TBNA']||0],backgroundColor:['#1d6fa4','#7c3aed','#d97706'],borderRadius:6,borderWidth:0}],
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:14},color:'#1a2332'}},
+        y:{grid:{color:'#e8eef5'},ticks:{stepSize:1,font:{size:13}},beginAtZero:true},
+      },
+    },
+  });
+}
+
+function renderTable(bookings) {
+  const tbody=document.getElementById('table-body');
+  if(!bookings.length){
+    tbody.innerHTML=`<tr class="empty-row"><td colspan="6"><div class="empty-icon">📭</div>ไม่มีข้อมูลในช่วงเวลานี้</td></tr>`;
+    return;
+  }
+  const sm={done:['status-done','✅ ทำแล้ว'],upcoming:['status-upcoming','🕐 รอทำ'],cancelled:['status-cancelled','❌ ยกเลิก']};
+  tbody.innerHTML=bookings.map(b=>{
+    const [cls,lbl]=sm[b.status]||['',''];
+    const isBroncho=b.procedure.includes('Bronchoscopy');
+    return `<tr>
+      <td data-label="วันที่/เวลา" style="font-weight:600;white-space:nowrap">${b.dateTime}</td>
+      <td data-label="แพทย์">${b.doctor}</td>
+      <td data-label="หัตถการ"><span class="proc-tag ${isBroncho?'':'pleuro'}">${b.procedure}</span></td>
+      <td data-label="HN" style="font-weight:600;color:var(--text2)">${b.hn}</td>
+      <td data-label="ชื่อผู้ป่วย">${b.patientName}</td>
+      <td data-label="สถานะ"><span class="status ${cls}">${lbl}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// Export CSV
+function exportCSV() {
+  if(!rawData) return;
+  const rows=[['วันที่/เวลา','แพทย์','หัตถการ','HN','ชื่อผู้ป่วย','สถานะ']];
+  rawData.bookings.forEach(b=>rows.push([b.dateTime,b.doctor,b.procedure,b.hn,b.patientName,b.status]));
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  Object.assign(document.createElement('a'),{
+    href:'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv),
+    download:`broncho_${new Date().toISOString().slice(0,10)}.csv`,
+  }).click();
+}
+
+// Boot
+(async()=>{
+  await loadDoctors();
+  await fetchData();
+  setInterval(fetchData,5*60*1000);
+})();
+</script>
+</body>
+</html>
