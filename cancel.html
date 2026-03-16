@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ยกเลิกการจองห้องส่องกล้อง</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f5fb;--surface:#fff;--border:#dde5f0;
+  --teal:#0891b2;--teal-dk:#0e7490;--teal-lt:#e0f7fa;
+  --green:#059669;--green-lt:#d1fae5;
+  --red:#dc2626;--red-lt:#fee2e2;--red-dk:#991b1b;
+  --text:#1a2332;--text2:#3d5166;--text3:#7c8fa6;
+  --shadow:0 4px 24px rgba(8,145,178,.10);--r:14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button{cursor:pointer;font-family:inherit}
+.hidden{display:none!important}
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
+.card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);width:100%;max-width:480px;overflow:hidden}
+.card-header{background:linear-gradient(135deg,var(--red-dk),var(--red));padding:24px 24px 20px}
+.card-icon{font-size:32px;margin-bottom:6px}
+.card-title{font-size:20px;font-weight:800;color:#fff}
+.card-sub{font-size:14px;color:rgba(255,255,255,.75);margin-top:2px}
+.card-body{padding:24px}
+
+.form-group{margin-bottom:18px}
+.form-label{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px}
+.form-input,.form-select{width:100%;padding:13px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Sarabun',sans-serif;font-size:16px;color:var(--text);background:#fff;outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:var(--red)}
+.form-input.pin{letter-spacing:8px;font-size:22px;font-weight:700;text-align:center}
+
+.btn{width:100%;padding:15px;border:none;border-radius:12px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;transition:all .2s;margin-top:6px}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-red{background:linear-gradient(135deg,var(--red-dk),var(--red));color:#fff}
+.btn-red:hover:not(:disabled){filter:brightness(.9)}
+.btn-outline{background:#fff;color:var(--text2);border:2px solid var(--border)}
+.btn-outline:hover:not(:disabled){border-color:var(--text2)}
+.btn-back{background:none;border:none;color:var(--text3);font-size:14px;font-weight:600;padding:0;margin-bottom:14px;display:inline-flex;align-items:center;gap:4px}
+.btn-back:hover{color:var(--text2)}
+.btn-cancel-item{background:#fff;color:var(--red);border:2px solid var(--red);border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;width:100%;margin-top:10px;transition:all .2s}
+.btn-cancel-item:hover{background:var(--red-lt)}
+
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:12px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:#fff;transition:all .15s}
+.pin-dot.filled{background:var(--red);border-color:var(--red)}
+
+.error-msg{background:var(--red-lt);border:1px solid #fca5a5;border-radius:10px;padding:12px 14px;font-size:14px;color:var(--red);font-weight:600;margin-bottom:14px;display:none}
+.error-msg.show{display:block}
+
+.booking-card{background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:border-color .2s}
+.booking-card:hover{border-color:var(--red)}
+.bc-date{font-size:13px;font-weight:700;color:var(--red)}
+.bc-proc{font-size:16px;font-weight:800;margin:4px 0 3px}
+.bc-pt{font-size:13px;color:var(--text3)}
+
+.confirm-box{background:#fff8f8;border:2px solid #fca5a5;border-radius:12px;padding:16px;margin-bottom:16px}
+.confirm-box .lbl{font-size:13px;color:var(--text3);margin-bottom:4px}
+.confirm-box .val{font-size:16px;font-weight:800;color:var(--text)}
+.warn-box{background:var(--red-lt);border-radius:10px;padding:12px 14px;font-size:14px;font-weight:600;color:var(--red-dk);margin-bottom:16px}
+
+.success-wrap{text-align:center;padding:24px 0 12px}
+.success-icon{font-size:64px}
+.success-title{font-size:24px;font-weight:800;color:var(--red);margin-top:10px}
+.success-sub{font-size:14px;color:var(--text3);margin-top:6px}
+
+.spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--red);animation:spin .6s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:32px 0}
+.loading-box p{font-size:14px;color:var(--text3);margin-top:12px}
+.empty{text-align:center;padding:36px 0;color:var(--text3)}
+.empty .ei{font-size:48px;margin-bottom:10px}
+.fade-in{animation:fadeIn .3s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="card fade-in">
+
+  <div class="card-header">
+    <div class="card-icon">❌</div>
+    <div class="card-title">ยกเลิกการจองห้องส่องกล้อง</div>
+    <div class="card-sub">ห้องหัตถการอายุรกรรม MSKH</div>
+  </div>
+
+  <div class="card-body">
+
+    <!-- ── Login ── -->
+    <div id="s-login">
+      <div class="form-group">
+        <label class="form-label">👨‍⚕️ ชื่อแพทย์</label>
+        <select id="sel-doctor" class="form-select" onchange="onDoctorChange()">
+          <option value="">— เลือกชื่อแพทย์ —</option>
+        </select>
+      </div>
+      <div class="form-group" id="pin-group" style="display:none">
+        <label class="form-label">🔐 รหัส PIN</label>
+        <div class="pin-dots" id="pin-dots"></div>
+        <input type="password" id="inp-pin" class="form-input pin"
+          maxlength="6" inputmode="numeric" placeholder="••••"
+          oninput="onPinInput()" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="error-msg" id="err-login"></div>
+      <button class="btn btn-red" id="btn-login" onclick="doLogin()" disabled>
+        เข้าสู่ระบบ →
+      </button>
+      <a href="form.html" style="display:block;text-align:center;margin-top:14px;font-size:14px;color:var(--text3);text-decoration:none">
+        📅 กลับหน้าจองคิว
+      </a>
+    </div>
+
+    <!-- ── My Bookings List ── -->
+    <div id="s-list" class="hidden">
+      <p style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:4px">📋 การจองของฉัน</p>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:16px">กดปุ่มยกเลิกที่รายการที่ต้องการ</p>
+      <div id="booking-list">
+        <div class="loading-box"><div class="spinner"></div><p>กำลังโหลด...</p></div>
+      </div>
+    </div>
+
+    <!-- ── Confirm Cancel ── -->
+    <div id="s-confirm" class="hidden">
+      <button class="btn-back" onclick="goList()">‹ กลับรายการจอง</button>
+      <p style="font-size:15px;font-weight:700;color:var(--red);margin-bottom:14px">⚠️ ยืนยันการยกเลิก</p>
+      <div class="confirm-box">
+        <div class="lbl">หัตถการ</div>
+        <div class="val" id="cc-proc">—</div>
+      </div>
+      <div class="confirm-box">
+        <div class="lbl">วันที่ / เวลา</div>
+        <div class="val" id="cc-dt">—</div>
+      </div>
+      <div class="warn-box">
+        ⚠️ การยกเลิกนี้ไม่สามารถเรียกคืนได้<br>
+        ระบบจะแจ้งไลน์กลุ่มทันที
+      </div>
+      <div class="error-msg" id="err-confirm"></div>
+      <button class="btn btn-red" id="btn-do-cancel" onclick="doCancel()">
+        ❌ ยืนยันยกเลิก
+      </button>
+      <button class="btn btn-outline" onclick="goList()" style="margin-top:6px">ไม่ยกเลิก</button>
+    </div>
+
+    <!-- ── Success ── -->
+    <div id="s-done" class="hidden">
+      <div class="success-wrap">
+        <div class="success-icon">✅</div>
+        <div class="success-title">ยกเลิกสำเร็จ</div>
+        <div class="success-sub">แจ้งกลุ่ม LINE เรียบร้อยแล้ว</div>
+      </div>
+      <button class="btn btn-outline" onclick="goList()" style="margin-top:20px">📋 ดูการจองที่เหลือ</button>
+      <a href="form.html" style="display:block;text-align:center;margin-top:12px;font-size:14px;color:var(--text3);text-decoration:none">
+        📅 กลับหน้าจองคิว
+      </a>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+const SCRIPT_URL = 'YOUR_WEB_APP_URL'; // ← แก้ตรงนี้ (URL เดียวกับ form.html)
+
+const S = { doctor: null, pin: null, target: null };
+
+async function api(action, params={}) {
+  const r = await fetch(SCRIPT_URL,{
+    method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action,params}),redirect:'follow',
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+// Screens
+function showScreen(id) {
+  ['s-login','s-list','s-confirm','s-done'].forEach(s =>
+    document.getElementById(s).classList.toggle('hidden', s!==id)
+  );
+}
+
+// Load doctors
+async function loadDoctors() {
+  const r = await api('getDoctorListPublic');
+  const sel = document.getElementById('sel-doctor');
+  if(r.success) r.doctors.forEach(d=>{
+    const o=document.createElement('option');
+    o.value=d;o.textContent=d;sel.appendChild(o);
+  });
+}
+
+function onDoctorChange() {
+  const v = document.getElementById('sel-doctor').value;
+  document.getElementById('pin-group').style.display = v ? '' : 'none';
+  if(v){ document.getElementById('inp-pin').value=''; renderPinDots(0); }
+  document.getElementById('btn-login').disabled = !v;
+}
+
+function renderPinDots(n) {
+  const max = parseInt(document.getElementById('inp-pin').maxLength)||6;
+  document.getElementById('pin-dots').innerHTML =
+    Array(max).fill(0).map((_,i)=>
+      `<div class="pin-dot ${i<n?'filled':''}"></div>`
+    ).join('');
+}
+
+function onPinInput() {
+  const v=document.getElementById('inp-pin').value;
+  renderPinDots(v.length);
+  const d=document.getElementById('sel-doctor').value;
+  document.getElementById('btn-login').disabled = !(d && v.length>=4);
+  showErr('err-login','');
+}
+
+async function doLogin() {
+  const doctor = document.getElementById('sel-doctor').value;
+  const pin    = document.getElementById('inp-pin').value;
+  const btn = document.getElementById('btn-login');
+  btn.disabled=true; btn.textContent='⏳ กำลังตรวจสอบ...';
+  try {
+    const r = await api('checkPin',{doctor,pin});
+    if(r.success && r.authorized){
+      S.doctor=doctor; S.pin=pin;
+      showScreen('s-list');
+      loadMyBookings();
+    } else {
+      showErr('err-login','❌ '+(r.error||'PIN ไม่ถูกต้อง'));
+      document.getElementById('inp-pin').value=''; renderPinDots(0);
+    }
+  } catch(err){ showErr('err-login','⚠️ '+err.message); }
+  finally { btn.disabled=false; btn.textContent='เข้าสู่ระบบ →'; }
+}
+
+async function loadMyBookings() {
+  document.getElementById('booking-list').innerHTML =
+    '<div class="loading-box"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  try {
+    const r = await api('getMyBookingsWeb',{doctor:S.doctor,pin:S.pin});
+    if(!r.success) throw new Error(r.error);
+    if(!r.bookings.length){
+      document.getElementById('booking-list').innerHTML =
+        '<div class="empty"><div class="ei">📭</div><p>ไม่มีการจองที่กำลังจะมาถึง</p></div>';
+      return;
+    }
+    document.getElementById('booking-list').innerHTML = r.bookings.map(b =>
+      `<div class="booking-card">
+        <div class="bc-date">🗓 ${b.dateTime} น.</div>
+        <div class="bc-proc">🔬 ${b.procedure}</div>
+        <div class="bc-pt">👤 ${b.patientName} | HN: ${b.hn}</div>
+        <button class="btn-cancel-item"
+          onclick='openConfirm(${JSON.stringify(b)})'>
+          ❌ ยกเลิกการจองนี้
+        </button>
+      </div>`
+    ).join('');
+  } catch(err) {
+    document.getElementById('booking-list').innerHTML =
+      `<div class="empty"><p style="color:var(--red)">⚠️ ${err.message}</p></div>`;
+  }
+}
+
+function openConfirm(b) {
+  S.target = b;
+  document.getElementById('cc-proc').textContent = b.procedure;
+  document.getElementById('cc-dt').textContent   = b.dateTime + ' น.';
+  showErr('err-confirm','');
+  showScreen('s-confirm');
+}
+
+async function doCancel() {
+  const btn = document.getElementById('btn-do-cancel');
+  btn.disabled=true; btn.textContent='⏳ กำลังยกเลิก...';
+  showErr('err-confirm','');
+  try {
+    const r = await api('cancelBookingWeb',{
+      doctor:   S.doctor,
+      pin:      S.pin,
+      eventId:  S.target.eventId,
+      rowIndex: S.target.rowIndex,
+    });
+    if(r.success) { showScreen('s-done'); }
+    else { showErr('err-confirm','❌ '+(r.error||'เกิดข้อผิดพลาด')); }
+  } catch(err){ showErr('err-confirm','⚠️ '+err.message); }
+  finally { btn.disabled=false; btn.textContent='❌ ยืนยันยกเลิก'; }
+}
+
+function goList() { showScreen('s-list'); loadMyBookings(); }
+function showErr(id,msg){ const e=document.getElementById(id); e.textContent=msg; e.classList.toggle('show',!!msg); }
+
+(async()=>{ showScreen('s-login'); await loadDoctors(); })();
+</script>
+</body>
+</html>

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>จองห้องส่องกล้องหลอดลม</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #f0f5fb;
+  --surface:  #ffffff;
+  --border:   #dde5f0;
+  --teal:     #0891b2;
+  --teal-dk:  #0e7490;
+  --teal-lt:  #e0f7fa;
+  --green:    #059669;
+  --green-lt: #d1fae5;
+  --blue:     #1d6fa4;
+  --blue-lt:  #dbeafe;
+  --red:      #dc2626;
+  --red-lt:   #fee2e2;
+  --orange:   #d97706;
+  --text:     #1a2332;
+  --text2:    #3d5166;
+  --text3:    #7c8fa6;
+  --shadow:   0 4px 24px rgba(8,145,178,.10);
+  --r:        14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button{cursor:pointer;font-family:inherit}
+.hidden{display:none!important}
+
+/* ── Page wrapper ── */
+.page{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px 48px;
+}
+
+/* ── Card ── */
+.card{
+  background:var(--surface);border-radius:20px;
+  box-shadow:var(--shadow);width:100%;max-width:480px;overflow:hidden;
+}
+.card-header{
+  background:linear-gradient(135deg,var(--teal-dk),var(--teal));
+  padding:24px 24px 20px;
+}
+.card-icon{font-size:32px;margin-bottom:6px}
+.card-title{font-size:20px;font-weight:800;color:#fff}
+.card-sub{font-size:14px;color:rgba(255,255,255,.75);margin-top:2px}
+.card-body{padding:24px}
+
+/* ── Step dots ── */
+.steps{display:flex;gap:6px;margin-bottom:22px;justify-content:center}
+.sdot{
+  height:6px;border-radius:3px;background:var(--border);
+  transition:all .3s;flex:1;max-width:48px;
+}
+.sdot.active{background:var(--teal)}
+.sdot.done{background:var(--green)}
+
+/* ── Form elements ── */
+.form-group{margin-bottom:18px}
+.form-label{
+  font-size:13px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.04em;
+  display:block;margin-bottom:8px;
+}
+.form-input, .form-select{
+  width:100%;padding:13px 16px;
+  border:2px solid var(--border);border-radius:12px;
+  font-family:'Sarabun',sans-serif;font-size:16px;color:var(--text);
+  background:#fff;outline:none;transition:border-color .2s;
+}
+.form-input:focus,.form-select:focus{border-color:var(--teal)}
+.form-input.pin{
+  letter-spacing:8px;font-size:22px;font-weight:700;
+  text-align:center;
+}
+
+/* ── Buttons ── */
+.btn{
+  width:100%;padding:15px;border:none;border-radius:12px;
+  font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;
+  transition:all .2s;margin-top:6px;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,var(--teal-dk),var(--teal));color:#fff}
+.btn-primary:hover:not(:disabled){background:linear-gradient(135deg,#0c647d,var(--teal-dk))}
+.btn-outline{background:#fff;color:var(--teal);border:2px solid var(--teal)}
+.btn-outline:hover:not(:disabled){background:var(--teal-lt)}
+.btn-danger{background:#fff;color:var(--red);border:2px solid var(--red)}
+.btn-danger:hover:not(:disabled){background:var(--red-lt)}
+.btn-sm{padding:10px 20px;width:auto;font-size:14px}
+.btn-back{
+  background:none;border:none;color:var(--text3);
+  font-size:14px;font-weight:600;padding:0;margin-bottom:14px;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.btn-back:hover{color:var(--text2)}
+
+/* ── Date card ── */
+.date-list{display:flex;flex-direction:column;gap:8px}
+.date-card{
+  border:2px solid var(--border);border-radius:12px;padding:14px 16px;
+  cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center;
+  background:#fff;
+}
+.date-card:hover{border-color:var(--teal)}
+.date-card.selected{border-color:var(--teal);background:var(--teal-lt)}
+.dc-label{font-size:15px;font-weight:700}
+.dc-avail{font-size:13px;font-weight:700}
+
+/* ── Slot grid ── */
+.slot-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot-btn{
+  padding:13px 8px;border-radius:10px;border:2px solid var(--border);
+  background:#fff;text-align:center;font-size:15px;font-weight:700;
+  transition:all .2s;cursor:pointer;font-family:'Sarabun',sans-serif;
+}
+.slot-btn .st{display:block;font-size:11px;font-weight:500;margin-top:3px}
+.slot-btn.free{border-color:#86efac;color:var(--green);background:var(--green-lt)}
+.slot-btn.free:hover,.slot-btn.free.sel{background:var(--green);color:#fff;border-color:var(--green)}
+.slot-btn.busy{border-color:#fca5a5;color:var(--red);background:var(--red-lt);cursor:not-allowed;opacity:.6}
+.slot-btn.sel{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── Procedure ── */
+.proc-row{display:flex;gap:8px}
+.proc-btn{
+  flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--border);
+  background:#fff;text-align:center;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .2s;font-family:'Sarabun',sans-serif;line-height:1.5;
+}
+.proc-btn.sel{border-color:var(--teal);background:var(--teal-lt);color:var(--teal-dk)}
+.sub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.sub-btn{
+  padding:10px 6px;border-radius:8px;border:2px solid var(--border);
+  background:#fff;text-align:center;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;font-family:'Sarabun',sans-serif;
+}
+.sub-btn.sel{border-color:var(--blue);background:var(--blue-lt);color:var(--blue)}
+
+/* ── Week nav ── */
+.week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.wnav-btn{
+  width:38px;height:38px;border-radius:10px;border:2px solid var(--border);
+  background:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;font-family:'Sarabun',sans-serif;
+}
+.wnav-btn:hover:not(:disabled){border-color:var(--teal);color:var(--teal)}
+.wnav-btn:disabled{opacity:.3;cursor:not-allowed}
+.wnav-label{font-size:14px;font-weight:700;color:var(--text2)}
+
+/* ── Summary banner ── */
+.slot-banner{
+  background:var(--teal-lt);border-left:4px solid var(--teal);
+  border-radius:0 10px 10px 0;padding:12px 14px;
+  font-size:15px;font-weight:700;color:var(--teal-dk);margin-bottom:18px;
+}
+
+/* ── Confirm table ── */
+.confirm-row{display:flex;padding:11px 0;border-bottom:1px solid var(--border);font-size:15px}
+.confirm-row:last-child{border-bottom:none}
+.confirm-lbl{color:var(--text3);width:100px;flex-shrink:0;font-size:14px;font-weight:600}
+.confirm-val{font-weight:700;color:var(--text)}
+
+/* ── Success ── */
+.success-wrap{text-align:center;padding:24px 0 12px}
+.success-icon{font-size:64px}
+.success-title{font-size:24px;font-weight:800;color:var(--green);margin-top:10px}
+.success-sub{font-size:14px;color:var(--text3);margin-top:6px}
+
+/* ── Booking card (My Bookings) ── */
+.booking-card{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  border-left:5px solid var(--teal);padding:14px 16px;margin-bottom:10px;
+}
+.bc-date{font-size:13px;font-weight:700;color:var(--teal)}
+.bc-proc{font-size:16px;font-weight:800;margin:4px 0 3px}
+.bc-pt{font-size:13px;color:var(--text3)}
+
+/* ── Loading ── */
+.spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:3px solid var(--border);border-top-color:var(--teal);
+  animation:spin .6s linear infinite;margin:0 auto;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:32px 0}
+.loading-box p{font-size:14px;color:var(--text3);margin-top:12px}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:36px 0;color:var(--text3)}
+.empty .ei{font-size:48px;margin-bottom:10px}
+
+/* ── Error msg ── */
+.error-msg{
+  background:var(--red-lt);border:1px solid #fca5a5;
+  border-radius:10px;padding:12px 14px;
+  font-size:14px;color:var(--red);font-weight:600;
+  margin-bottom:14px;display:none;
+}
+.error-msg.show{display:block}
+
+/* ── PIN dots ── */
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:12px 0}
+.pin-dot{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--border);background:#fff;
+  transition:all .15s;
+}
+.pin-dot.filled{background:var(--teal);border-color:var(--teal)}
+
+/* Animations */
+.fade-in{animation:fadeIn .3s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="card fade-in">
+
+  <!-- Header -->
+  <div class="card-header">
+    <div class="card-icon">🫁</div>
+    <div class="card-title" id="hd-title">จองห้องส่องกล้องหลอดลม</div>
+    <div class="card-sub" id="hd-sub">ห้องหัตถการอายุรกรรม MSKH</div>
+  </div>
+
+  <div class="card-body">
+    <!-- Steps -->
+    <div class="steps" id="step-dots">
+      <div class="sdot" id="sd1"></div>
+      <div class="sdot" id="sd2"></div>
+      <div class="sdot" id="sd3"></div>
+      <div class="sdot" id="sd4"></div>
+    </div>
+
+    <!-- ════ STEP 1: Login ════ -->
+    <div id="s1">
+      <div class="form-group">
+        <label class="form-label">👨‍⚕️ ชื่อแพทย์</label>
+        <select id="sel-doctor" class="form-select" onchange="onDoctorChange()">
+          <option value="">— เลือกชื่อแพทย์ —</option>
+        </select>
+      </div>
+      <div class="form-group" id="pin-group" style="display:none">
+        <label class="form-label">🔐 รหัส PIN</label>
+        <div class="pin-dots" id="pin-dots"></div>
+        <input type="password" id="inp-pin" class="form-input pin"
+          maxlength="6" inputmode="numeric" placeholder="••••"
+          oninput="onPinInput()" onkeydown="onPinKey(event)">
+      </div>
+      <div class="error-msg" id="err-login"></div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()" disabled>
+        เข้าสู่ระบบ →
+      </button>
+    </div>
+
+    <!-- ════ STEP 2: เลือกวันที่ ════ -->
+    <div id="s2" class="hidden">
+      <button class="btn-back" onclick="goS(1)">‹ ออกจากระบบ</button>
+      <div class="week-nav">
+        <button class="wnav-btn" id="btn-pw" onclick="changeWeek(-1)" disabled>‹</button>
+        <span class="wnav-label" id="wk-label">—</span>
+        <button class="wnav-btn" id="btn-nw" onclick="changeWeek(1)">›</button>
+      </div>
+      <div id="date-list" class="date-list">
+        <div class="loading-box"><div class="spinner"></div><p>กำลังโหลด...</p></div>
+      </div>
+    </div>
+
+    <!-- ════ STEP 3: เลือกเวลา ════ -->
+    <div id="s3" class="hidden">
+      <button class="btn-back" onclick="goS(2)">‹ เปลี่ยนวันที่</button>
+      <div id="s3-date-lbl" style="font-size:16px;font-weight:800;margin-bottom:14px;color:var(--teal-dk)"></div>
+      <div id="slot-grid" class="slot-grid"></div>
+      <button class="btn btn-primary" id="btn-to-s4" onclick="goS(4)" disabled style="margin-top:14px">
+        กรอกรายละเอียด →
+      </button>
+    </div>
+
+    <!-- ════ STEP 4: รายละเอียด ════ -->
+    <div id="s4" class="hidden">
+      <button class="btn-back" onclick="goS(3)">‹ เปลี่ยนเวลา</button>
+      <div class="slot-banner" id="slot-banner">—</div>
+
+      <div class="form-group">
+        <label class="form-label">🔬 หัตถการหลัก *</label>
+        <div class="proc-row">
+          <div class="proc-btn" id="pb-broncho" onclick="selProc('Bronchoscopy')">🫁<br>Bronchoscopy</div>
+          <div class="proc-btn" id="pb-pleuro"  onclick="selProc('Pleuroscopy')">🫀<br>Pleuroscopy</div>
+        </div>
+      </div>
+
+      <div class="form-group hidden" id="sub-group">
+        <label class="form-label">🩺 หัตถการย่อย * (เลือกได้หลายอย่าง)</label>
+        <div class="sub-grid">
+          <div class="sub-btn" id="sb-BAL"  onclick="togSub('BAL')">BAL</div>
+          <div class="sub-btn" id="sb-TBBx" onclick="togSub('TBBx')">TBBx</div>
+          <div class="sub-btn" id="sb-EBUS" onclick="togSub('EBUS TBNA')">EBUS TBNA</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🏥 HN ผู้ป่วย *</label>
+        <input type="text" id="inp-hn" class="form-input" placeholder="เช่น 123456"
+          inputmode="numeric" oninput="validateS4()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">👤 ชื่อ-นามสกุล ผู้ป่วย *</label>
+        <input type="text" id="inp-patient" class="form-input" placeholder="ชื่อ นามสกุล" oninput="validateS4()">
+      </div>
+      <div class="error-msg" id="err-s4"></div>
+      <button class="btn btn-primary" id="btn-confirm" onclick="openConfirm()" disabled>
+        ตรวจสอบข้อมูล →
+      </button>
+    </div>
+
+    <!-- ════ STEP 5: Confirm ════ -->
+    <div id="s5" class="hidden">
+      <button class="btn-back" onclick="goS(4)">‹ แก้ไขข้อมูล</button>
+      <p style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:14px">📋 ยืนยันการจอง</p>
+      <div id="confirm-body"></div>
+      <div class="error-msg" id="err-s5"></div>
+      <button class="btn btn-primary" id="btn-submit" onclick="submitBooking()" style="margin-top:16px">
+        ✅ ยืนยันและบันทึก
+      </button>
+      <button class="btn btn-outline" onclick="goS(4)" style="margin-top:6px">แก้ไข</button>
+    </div>
+
+    <!-- ════ STEP 6: Success ════ -->
+    <div id="s6" class="hidden">
+      <div class="success-wrap">
+        <div class="success-icon">✅</div>
+        <div class="success-title">จองสำเร็จ!</div>
+        <div class="success-sub">แจ้งกลุ่ม LINE เรียบร้อยแล้ว</div>
+      </div>
+      <div id="success-body" style="margin:16px 0"></div>
+      <button class="btn btn-primary" onclick="resetForm()">📅 จองเพิ่มเติม</button>
+      <button class="btn btn-outline" onclick="goMyBookings()" style="margin-top:6px">📋 ดูการจองของฉัน</button>
+    </div>
+
+    <!-- ════ My Bookings ════ -->
+    <div id="s-my" class="hidden">
+      <button class="btn-back" onclick="goS(2)">‹ กลับหน้าจอง</button>
+      <p style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:14px">📋 การจองของฉัน</p>
+      <div id="my-list"><div class="loading-box"><div class="spinner"></div></div></div>
+    </div>
+
+  </div><!-- /card-body -->
+</div><!-- /card -->
+</div><!-- /page -->
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════
+const SCRIPT_URL = 'YOUR_WEB_APP_URL'; // ← แก้ตรงนี้
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const S = {
+  doctor:      null,
+  pin:         null,
+  weekOffset:  0,
+  allSlots:    [],
+  selDate:     null,
+  selSlot:     null,
+  procedure:   null,
+  subProcs:    [],
+};
+
+const SUB_IDS = {
+  'BAL':      'sb-BAL',
+  'TBBx':     'sb-TBBx',
+  'EBUS TBNA':'sb-EBUS',
+};
+
+// ══════════════════════════════════════════
+//  SERVER CALL
+// ══════════════════════════════════════════
+async function api(action, params={}) {
+  const r = await fetch(SCRIPT_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify({action, params}), redirect:'follow',
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+// ══════════════════════════════════════════
+//  STEP MANAGEMENT
+// ══════════════════════════════════════════
+const STEP_IDS = ['s1','s2','s3','s4','s5','s6','s-my'];
+const DOT_STEPS = { s1:1, s2:2, s3:3, s4:4, s5:4, s6:4 };
+
+function goS(n) {
+  const id = n === 'my' ? 's-my' : 's'+n;
+  STEP_IDS.forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
+
+  // Dots
+  const cur = DOT_STEPS[id] || 1;
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('sd'+i);
+    el.className = 'sdot' + (i < cur ? ' done' : i === cur ? ' active' : '');
+  });
+  document.getElementById('step-dots').style.display = id === 's-my' ? 'none' : 'flex';
+}
+
+// ══════════════════════════════════════════
+//  STEP 1 — LOGIN
+// ══════════════════════════════════════════
+async function loadDoctors() {
+  const r = await api('getDoctorListPublic');
+  const sel = document.getElementById('sel-doctor');
+  if (r.success) {
+    r.doctors.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d; sel.appendChild(o);
+    });
+  }
+}
+
+function onDoctorChange() {
+  const val = document.getElementById('sel-doctor').value;
+  const pg  = document.getElementById('pin-group');
+  const inp = document.getElementById('inp-pin');
+  if (val) {
+    pg.style.display = '';
+    inp.value = '';
+    renderPinDots(0);
+    inp.focus();
+  } else {
+    pg.style.display = 'none';
+  }
+  document.getElementById('btn-login').disabled = !val || !inp.value;
+}
+
+function renderPinDots(len) {
+  const max = parseInt(document.getElementById('inp-pin').maxLength) || 6;
+  document.getElementById('pin-dots').innerHTML =
+    Array(max).fill(0).map((_,i) =>
+      `<div class="pin-dot ${i < len ? 'filled' : ''}"></div>`
+    ).join('');
+}
+
+function onPinInput() {
+  const v = document.getElementById('inp-pin').value;
+  renderPinDots(v.length);
+  const hasDoc = document.getElementById('sel-doctor').value;
+  document.getElementById('btn-login').disabled = !(hasDoc && v.length >= 4);
+  showErr('err-login', '');
+}
+
+function onPinKey(e) {
+  if (e.key === 'Enter') doLogin();
+}
+
+async function doLogin() {
+  const doctor = document.getElementById('sel-doctor').value;
+  const pin    = document.getElementById('inp-pin').value;
+  if (!doctor || !pin) return;
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบ...';
+
+  try {
+    const r = await api('checkPin', { doctor, pin });
+    if (r.success && r.authorized) {
+      S.doctor = doctor; S.pin = pin;
+      showErr('err-login', '');
+      goS(2);
+      loadSlots();
+    } else {
+      showErr('err-login', '❌ ' + (r.error || 'PIN ไม่ถูกต้อง'));
+      document.getElementById('inp-pin').value = '';
+      renderPinDots(0);
+    }
+  } catch(err) {
+    showErr('err-login', '⚠️ เกิดข้อผิดพลาด: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ →';
+  }
+}
+
+// ══════════════════════════════════════════
+//  STEP 2 — เลือกวันที่
+// ══════════════════════════════════════════
+async function loadSlots() {
+  document.getElementById('date-list').innerHTML =
+    '<div class="loading-box"><div class="spinner"></div><p>กำลังโหลด slot...</p></div>';
+  updateWeekNav();
+  try {
+    const r = await api('getAvailableSlots', S.weekOffset);
+    if (!r.success) throw new Error(r.error);
+    S.allSlots = r.slots;
+    renderDates();
+  } catch(err) {
+    document.getElementById('date-list').innerHTML =
+      `<div class="empty"><div class="ei">⚠️</div><p>โหลดไม่ได้: ${err.message}</p>
+       <button class="btn btn-outline btn-sm" onclick="loadSlots()" style="margin-top:12px">🔄 ลองใหม่</button></div>`;
+  }
+}
+
+function updateWeekNav() {
+  document.getElementById('btn-pw').disabled = S.weekOffset <= 0;
+  document.getElementById('wk-label').textContent =
+    S.weekOffset === 0 ? '4 สัปดาห์ถัดไป' : `ล่วงหน้า ${S.weekOffset*4+1}–${(S.weekOffset+1)*4} สัปดาห์`;
+}
+
+function changeWeek(d) {
+  S.weekOffset = Math.max(0, S.weekOffset + d);
+  S.selDate = null; S.selSlot = null;
+  loadSlots();
+}
+
+function renderDates() {
+  const map = {};
+  S.allSlots.forEach(s => {
+    if (!map[s.dateKey]) map[s.dateKey] = { label: s.dateLabel, slots: [] };
+    map[s.dateKey].slots.push(s);
+  });
+  const keys = Object.keys(map).sort();
+  if (!keys.length) {
+    document.getElementById('date-list').innerHTML =
+      '<div class="empty"><div class="ei">📅</div><p>ไม่มีวันว่างในช่วงนี้</p></div>';
+    return;
+  }
+  document.getElementById('date-list').innerHTML = keys.map(k => {
+    const {label, slots} = map[k];
+    const avail = slots.filter(s=>s.available).length;
+    const total = slots.length;
+    const c = avail===0 ? 'var(--red)' : avail<=2 ? 'var(--orange)' : 'var(--green)';
+    const t = avail===0 ? 'เต็มทุก slot' : `ว่าง ${avail}/${total} slot`;
+    return `<div class="date-card ${S.selDate===k?'selected':''}" onclick="pickDate('${k}')">
+      <div class="dc-label">📅 ${label}</div>
+      <div class="dc-avail" style="color:${c}">● ${t}</div>
+    </div>`;
+  }).join('');
+}
+
+function pickDate(key) {
+  S.selDate = key; S.selSlot = null;
+  renderDates();
+  const first = S.allSlots.find(s=>s.dateKey===key);
+  document.getElementById('s3-date-lbl').textContent = '📅 ' + (first ? first.dateLabel : key);
+  document.getElementById('btn-to-s4').disabled = true;
+  goS(3);
+  renderSlots();
+}
+
+// ══════════════════════════════════════════
+//  STEP 3 — เลือกเวลา
+// ══════════════════════════════════════════
+function renderSlots() {
+  const day = S.allSlots.filter(s=>s.dateKey===S.selDate);
+  document.getElementById('slot-grid').innerHTML = day.map((slot, i) => {
+    const isSel = S.selSlot && S.selSlot.startISO === slot.startISO;
+    if (slot.available) {
+      return `<button class="slot-btn free ${isSel?'sel':''}" onclick="pickSlot(${i})">
+        ${slot.timeStr}<span class="st">🟢 ว่าง</span>
+      </button>`;
+    }
+    return `<button class="slot-btn busy" disabled>
+      ${slot.timeStr}<span class="st">🔴 เต็ม</span>
+    </button>`;
+  }).join('');
+}
+
+function pickSlot(i) {
+  S.selSlot = S.allSlots.filter(s=>s.dateKey===S.selDate)[i];
+  document.getElementById('btn-to-s4').disabled = false;
+  document.getElementById('slot-banner').textContent =
+    '🗓 ' + S.selSlot.dateLabel + '  ⏰ ' + S.selSlot.timeStr;
+  renderSlots();
+}
+
+// ══════════════════════════════════════════
+//  STEP 4 — รายละเอียด
+// ══════════════════════════════════════════
+function selProc(p) {
+  S.procedure = p; S.subProcs = [];
+  document.getElementById('pb-broncho').classList.toggle('sel', p==='Bronchoscopy');
+  document.getElementById('pb-pleuro').classList.toggle('sel', p==='Pleuroscopy');
+  document.getElementById('sub-group').classList.toggle('hidden', p!=='Bronchoscopy');
+  Object.values(SUB_IDS).forEach(id => document.getElementById(id).classList.remove('sel'));
+  validateS4();
+}
+
+function togSub(label) {
+  const idx = S.subProcs.indexOf(label);
+  if (idx===-1) S.subProcs.push(label);
+  else S.subProcs.splice(idx,1);
+  document.getElementById(SUB_IDS[label]).classList.toggle('sel', S.subProcs.includes(label));
+  validateS4();
+}
+
+function validateS4() {
+  const hn  = document.getElementById('inp-hn').value.trim();
+  const pt  = document.getElementById('inp-patient').value.trim();
+  let ok = !!S.procedure && !!hn && !!pt;
+  if (S.procedure==='Bronchoscopy' && S.subProcs.length===0) ok = false;
+  document.getElementById('btn-confirm').disabled = !ok;
+}
+
+function procTitle() {
+  if (S.procedure==='Bronchoscopy' && S.subProcs.length)
+    return 'Bronchoscopy (' + S.subProcs.join(', ') + ')';
+  return S.procedure || '—';
+}
+
+// ══════════════════════════════════════════
+//  STEP 5 — Confirm
+// ══════════════════════════════════════════
+function openConfirm() {
+  const hn = document.getElementById('inp-hn').value.trim();
+  const pt = document.getElementById('inp-patient').value.trim();
+  document.getElementById('confirm-body').innerHTML = [
+    ['แพทย์',    S.doctor],
+    ['วันที่',   S.selSlot.dateLabel],
+    ['เวลา',     S.selSlot.timeStr],
+    ['หัตถการ',  procTitle()],
+    ['HN',       hn],
+    ['ผู้ป่วย',  pt],
+  ].map(([l,v]) =>
+    `<div class="confirm-row">
+      <span class="confirm-lbl">${l}</span>
+      <span class="confirm-val">${v}</span>
+    </div>`
+  ).join('');
+  showErr('err-s5','');
+  goS(5);
+}
+
+async function submitBooking() {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  showErr('err-s5','');
+
+  try {
+    const r = await api('createBookingWeb', {
+      doctor:        S.doctor,
+      pin:           S.pin,
+      slotStart:     S.selSlot.startISO,
+      slotEnd:       S.selSlot.endISO,
+      procedure:     S.procedure,
+      subProcedures: S.subProcs,
+      hn:            document.getElementById('inp-hn').value.trim(),
+      patientName:   document.getElementById('inp-patient').value.trim(),
+    });
+
+    if (r.success) {
+      document.getElementById('success-body').innerHTML = [
+        ['แพทย์',   r.doctorName],
+        ['วันเวลา', r.dateTimeStr + ' น.'],
+        ['หัตถการ', r.eventTitle],
+        ['HN',      r.hn],
+        ['ผู้ป่วย', r.patientName],
+      ].map(([l,v]) =>
+        `<div class="confirm-row">
+          <span class="confirm-lbl">${l}</span>
+          <span class="confirm-val">${v}</span>
+        </div>`
+      ).join('');
+      goS(6);
+    } else {
+      if (r.error==='SLOT_TAKEN') {
+        showErr('err-s5','⚠️ slot นี้ถูกจองไปแล้ว กรุณาเลือก slot ใหม่');
+        S.selSlot = null;
+        await loadSlots();
+        goS(3);
+      } else {
+        showErr('err-s5','❌ เกิดข้อผิดพลาด: ' + r.error);
+      }
+    }
+  } catch(err) {
+    showErr('err-s5','⚠️ ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '✅ ยืนยันและบันทึก';
+  }
+}
+
+// ══════════════════════════════════════════
+//  MY BOOKINGS
+// ══════════════════════════════════════════
+async function goMyBookings() {
+  goS('my');
+  document.getElementById('my-list').innerHTML =
+    '<div class="loading-box"><div class="spinner"></div></div>';
+  try {
+    const r = await api('getMyBookingsWeb', { doctor: S.doctor, pin: S.pin });
+    if (!r.success) throw new Error(r.error);
+    if (!r.bookings.length) {
+      document.getElementById('my-list').innerHTML =
+        '<div class="empty"><div class="ei">📭</div><p>ไม่มีการจองที่กำลังจะมาถึง</p></div>';
+      return;
+    }
+    document.getElementById('my-list').innerHTML = r.bookings.map(b =>
+      `<div class="booking-card">
+        <div class="bc-date">🗓 ${b.dateTime} น.</div>
+        <div class="bc-proc">🔬 ${b.procedure}</div>
+        <div class="bc-pt">👤 ${b.patientName} | HN: ${b.hn}</div>
+      </div>`
+    ).join('');
+  } catch(err) {
+    document.getElementById('my-list').innerHTML =
+      `<div class="empty"><p style="color:var(--red)">⚠️ ${err.message}</p></div>`;
+  }
+}
+
+// ══════════════════════════════════════════
+//  RESET & HELPERS
+// ══════════════════════════════════════════
+function resetForm() {
+  S.selDate=null; S.selSlot=null; S.procedure=null; S.subProcs=[];
+  S.weekOffset=0;
+  ['inp-hn','inp-patient'].forEach(id => document.getElementById(id).value='');
+  ['pb-broncho','pb-pleuro'].forEach(id => document.getElementById(id).classList.remove('sel'));
+  Object.values(SUB_IDS).forEach(id => document.getElementById(id).classList.remove('sel'));
+  document.getElementById('sub-group').classList.add('hidden');
+  loadSlots(); goS(2);
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.toggle('show', !!msg);
+}
+
+// ══════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════
+(async()=>{
+  goS(1);
+  await loadDoctors();
+})();
+</script>
+</body>
+</html>
