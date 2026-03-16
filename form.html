@@ -246,15 +246,41 @@ button{cursor:pointer;font-family:inherit}
           <option value="">— เลือกชื่อแพทย์ —</option>
         </select>
       </div>
-      <div class="form-group" id="pin-group" style="display:none">
-        <label class="form-label">🔐 รหัส PIN</label>
-        <div class="pin-dots" id="pin-dots"></div>
-        <input type="password" id="inp-pin" class="form-input pin"
-          maxlength="6" inputmode="numeric" placeholder="••••"
-          oninput="onPinInput()" onkeydown="onPinKey(event)">
+
+      <!-- ── กรอก PIN ปกติ ── -->
+      <div id="pin-group" style="display:none">
+        <div class="form-group">
+          <label class="form-label">🔐 รหัส PIN 6 หลัก</label>
+          <div class="pin-dots" id="pin-dots"></div>
+          <input type="password" id="inp-pin" class="form-input pin"
+            maxlength="6" inputmode="numeric" placeholder="••••••"
+            oninput="onPinInput()" onkeydown="onPinKey(event)">
+        </div>
       </div>
+
+      <!-- ── ตั้ง PIN ครั้งแรก ── -->
+      <div id="setpin-group" style="display:none">
+        <div style="background:#fff8e1;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:#92400e;font-weight:600">
+          🔑 ยังไม่มีรหัส PIN — กรุณาตั้ง PIN 6 หลักของคุณ
+        </div>
+        <div class="form-group">
+          <label class="form-label">🔐 ตั้งรหัส PIN 6 หลัก</label>
+          <div class="pin-dots" id="setpin-dots"></div>
+          <input type="password" id="inp-setpin" class="form-input pin"
+            maxlength="6" inputmode="numeric" placeholder="••••••"
+            oninput="onSetPinInput()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">🔐 ยืนยัน PIN อีกครั้ง</label>
+          <div class="pin-dots" id="setpin-dots2"></div>
+          <input type="password" id="inp-setpin2" class="form-input pin"
+            maxlength="6" inputmode="numeric" placeholder="••••••"
+            oninput="onSetPinInput()" onkeydown="if(event.key==='Enter')doSetPin()">
+        </div>
+      </div>
+
       <div class="error-msg" id="err-login"></div>
-      <button class="btn btn-primary" id="btn-login" onclick="doLogin()" disabled>
+      <button class="btn btn-primary" id="btn-login" onclick="doLoginOrSetPin()" disabled>
         เข้าสู่ระบบ →
       </button>
     </div>
@@ -414,56 +440,122 @@ function goS(n) {
 // ══════════════════════════════════════════
 //  STEP 1 — LOGIN
 // ══════════════════════════════════════════
+// ── Doctor list (store hasPin per name) ──
+const DOCTOR_MAP = {}; // { 'ชื่อแพทย์': true/false }
+
 async function loadDoctors() {
   const r = await api('getDoctorListPublic');
   const sel = document.getElementById('sel-doctor');
   if (r.success) {
     r.doctors.forEach(d => {
+      DOCTOR_MAP[d.name] = d.hasPin;
       const o = document.createElement('option');
-      o.value = d; o.textContent = d; sel.appendChild(o);
+      o.value = d.name; o.textContent = d.name;
+      sel.appendChild(o);
     });
   }
 }
 
 function onDoctorChange() {
-  const val = document.getElementById('sel-doctor').value;
-  const pg  = document.getElementById('pin-group');
-  const inp = document.getElementById('inp-pin');
-  if (val) {
-    pg.style.display = '';
-    inp.value = '';
-    renderPinDots(0);
-    inp.focus();
-  } else {
-    pg.style.display = 'none';
+  const val    = document.getElementById('sel-doctor').value;
+  const hasPin = val ? DOCTOR_MAP[val] : null;
+
+  document.getElementById('pin-group').style.display    = (val && hasPin)  ? '' : 'none';
+  document.getElementById('setpin-group').style.display = (val && !hasPin) ? '' : 'none';
+
+  if (val && hasPin) {
+    document.getElementById('inp-pin').value = '';
+    renderDots('pin-dots', 0, 6);
+    document.getElementById('inp-pin').focus();
   }
-  document.getElementById('btn-login').disabled = !val || !inp.value;
+  if (val && !hasPin) {
+    document.getElementById('inp-setpin').value  = '';
+    document.getElementById('inp-setpin2').value = '';
+    renderDots('setpin-dots',  0, 6);
+    renderDots('setpin-dots2', 0, 6);
+    document.getElementById('btn-login').textContent = 'ตั้ง PIN และเข้าสู่ระบบ →';
+  } else {
+    document.getElementById('btn-login').textContent = 'เข้าสู่ระบบ →';
+  }
+
+  document.getElementById('btn-login').disabled = !val;
+  showErr('err-login', '');
 }
 
-function renderPinDots(len) {
-  const max = parseInt(document.getElementById('inp-pin').maxLength) || 6;
-  document.getElementById('pin-dots').innerHTML =
-    Array(max).fill(0).map((_,i) =>
-      `<div class="pin-dot ${i < len ? 'filled' : ''}"></div>`
+function renderDots(dotId, filled, total) {
+  document.getElementById(dotId).innerHTML =
+    Array(total).fill(0).map((_,i) =>
+      `<div class="pin-dot ${i < filled ? 'filled' : ''}"></div>`
     ).join('');
 }
 
 function onPinInput() {
   const v = document.getElementById('inp-pin').value;
-  renderPinDots(v.length);
+  renderDots('pin-dots', v.length, 6);
   const hasDoc = document.getElementById('sel-doctor').value;
-  document.getElementById('btn-login').disabled = !(hasDoc && v.length >= 4);
+  document.getElementById('btn-login').disabled = !(hasDoc && v.length === 6);
   showErr('err-login', '');
 }
 
-function onPinKey(e) {
-  if (e.key === 'Enter') doLogin();
+function onSetPinInput() {
+  const v1 = document.getElementById('inp-setpin').value;
+  const v2 = document.getElementById('inp-setpin2').value;
+  renderDots('setpin-dots',  v1.length, 6);
+  renderDots('setpin-dots2', v2.length, 6);
+  const hasDoc = document.getElementById('sel-doctor').value;
+  document.getElementById('btn-login').disabled = !(hasDoc && v1.length === 6 && v2.length === 6);
+  showErr('err-login', '');
+}
+
+function onPinKey(e) { if (e.key === 'Enter') doLoginOrSetPin(); }
+
+function doLoginOrSetPin() {
+  const val = document.getElementById('sel-doctor').value;
+  if (!val) return;
+  DOCTOR_MAP[val] ? doLogin() : doSetPin();
+}
+
+async function doSetPin() {
+  const doctor = document.getElementById('sel-doctor').value;
+  const pin1   = document.getElementById('inp-setpin').value;
+  const pin2   = document.getElementById('inp-setpin2').value;
+
+  if (pin1.length !== 6 || pin2.length !== 6) {
+    showErr('err-login', '❌ กรุณากรอก PIN ให้ครบ 6 หลัก'); return;
+  }
+  if (pin1 !== pin2) {
+    showErr('err-login', '❌ PIN ทั้งสองช่องไม่ตรงกัน กรุณากรอกใหม่');
+    document.getElementById('inp-setpin2').value = '';
+    renderDots('setpin-dots2', 0, 6); return;
+  }
+  if (!/^\d{6}$/.test(pin1)) {
+    showErr('err-login', '❌ PIN ต้องเป็นตัวเลขเท่านั้น'); return;
+  }
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก PIN...';
+
+  try {
+    const r = await api('setPin', { doctor, pin: pin1 });
+    if (r.success) {
+      DOCTOR_MAP[doctor] = true; // update local state
+      S.doctor = doctor; S.pin = pin1;
+      showErr('err-login', '');
+      goS(2); loadSlots();
+    } else {
+      showErr('err-login', '❌ ' + r.error);
+    }
+  } catch(err) {
+    showErr('err-login', '⚠️ ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'ตั้ง PIN และเข้าสู่ระบบ →';
+  }
 }
 
 async function doLogin() {
   const doctor = document.getElementById('sel-doctor').value;
   const pin    = document.getElementById('inp-pin').value;
-  if (!doctor || !pin) return;
+  if (!doctor || pin.length !== 6) return;
 
   const btn = document.getElementById('btn-login');
   btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบ...';
@@ -473,15 +565,14 @@ async function doLogin() {
     if (r.success && r.authorized) {
       S.doctor = doctor; S.pin = pin;
       showErr('err-login', '');
-      goS(2);
-      loadSlots();
+      goS(2); loadSlots();
     } else {
       showErr('err-login', '❌ ' + (r.error || 'PIN ไม่ถูกต้อง'));
       document.getElementById('inp-pin').value = '';
-      renderPinDots(0);
+      renderDots('pin-dots', 0, 6);
     }
   } catch(err) {
-    showErr('err-login', '⚠️ เกิดข้อผิดพลาด: ' + err.message);
+    showErr('err-login', '⚠️ ' + err.message);
   } finally {
     btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ →';
   }
@@ -526,8 +617,12 @@ function renderDates() {
   });
   const keys = Object.keys(map).sort();
   if (!keys.length) {
-    document.getElementById('date-list').innerHTML =
-      '<div class="empty"><div class="ei">📅</div><p>ไม่มีวันว่างในช่วงนี้</p></div>';
+    document.getElementById('date-list').innerHTML = `
+      <div class="empty">
+        <div class="ei">📅</div>
+        <p style="font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px">ไม่มีวันว่างในช่วงนี้</p>
+        <p style="font-size:13px;color:var(--text3)">ลองกดปุ่ม › เพื่อดูช่วงเวลาถัดไป<br>หรือ slot ทั้งหมดถูกจองเต็มแล้ว</p>
+      </div>`;
     return;
   }
   document.getElementById('date-list').innerHTML = keys.map(k => {
